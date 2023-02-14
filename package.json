@@ -4,7 +4,7 @@
   "description": "To-Do Backend",
   "main": "index.js",
   "scripts": {
-    "stare": "node index.js",
+    "start": "node index.js",
     "dev": "nodemon index.js"
   },
   "author": "",
