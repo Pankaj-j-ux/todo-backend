@@ -7,12 +7,14 @@ require("dotenv").config();
 const app = express();
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
 
 // Importing Routes ...
 const UserRoutes = require("./Routes/UserRoutes");
 const TaskRoutes = require("./Routes/TaskRoutes");
 
 // Adding Middlewares ...
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
