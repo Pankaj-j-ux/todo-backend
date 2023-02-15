@@ -106,11 +106,11 @@ exports.getTask = async (req, res, next) => {
     const incompleteTask = await Task.find({
       createdBy: userId,
       status: false,
-    }).sort({ createdAt: 1 });
+    }).sort({ createdAt: -1 });
     const completeTask = await Task.find({
       createdBy: userId,
       status: true,
-    }).sort({ createdAt: 1 });
+    }).sort({ createdAt: -1 });
     res.status(200).json({
       status: "success",
       success: true,
