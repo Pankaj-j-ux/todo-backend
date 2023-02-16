@@ -14,7 +14,7 @@ const sendVerificationEmail = async (result, req, res) => {
     const message = `<p>Verify your email address to complete the signup into your account.</p><p>This link <b>expires in 6 hours</b></p><p>Press <a href=${url}>here</a> to proceed</a></p>`;
 
     const verificationObject = await userVerification.find({ _id });
-    if (verificationObject.lenght) {
+    if (verificationObject.length) {
       userVerification.deleteOne({ userId: _id });
     }
 

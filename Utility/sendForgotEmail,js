@@ -1,0 +1,41 @@
+/** @format */
+const { v4: uuidv4 } = require("uuid");
+const userVerification = require("../Models/userVerification");
+const forgotPassword = require("./../Models/forgotPassword.js");
+const emailHelper = require("../Utility/emailHelper");
+
+const sendForgotEmail = async (result, req, res) => {
+  try {
+    const { _id, email } = result;
+    const uniqueString = uuidv4();
+    const url = `${req.protocol}://${req.get(
+      "host"
+    )}/api/v1/forgotpassword/${_id}/${uniqueString}`;
+    const subject = "TODO: Forgot Password email";
+    const message = `<p>This link <b>expires in 6 hours</b></p><p><a href=${url}>Press here</a> to proceed.</p>`;
+
+    const forgotObject = await forgotPassword.find({ _id });
+    if (forgotObject.length) {
+      forgotPassword.deleteOne({ userId: _id });
+    }
+
+    const newForgotPasswordObject = new forgotPassword({
+      userId: _id,
+      uniqueString,
+      expireAt: Date.now() + 21600000,
+    });
+
+    await newForgotPasswordObject.save();
+
+    emailHelper({ email, message, subject }, res);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      status: "failure",
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+module.exports = sendForgotEmail;

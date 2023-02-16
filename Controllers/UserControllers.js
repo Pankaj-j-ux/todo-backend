@@ -5,6 +5,8 @@ const UserVerification = require("../Models/userVerification");
 const sendVerificationEmail = require("../Utility/sendVerificationEmail");
 const path = require("path");
 const bcrypt = require("bcryptjs");
+const sendForgotEmail = require("../Utility/sendForgotEmail,js");
+const forgotPassword = require("../Models/forgotPassword");
 
 exports.signup = async (req, res, next) => {
   try {
@@ -141,9 +143,90 @@ exports.verifyEmail = async (req, res, next) => {
   }
 };
 
+exports.sendPasswordForgotLink = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const emailRegex = new RegExp(
+      /^[A-Za-z0-9_!#$%&'*+\/=?`{|}~^.-]+@[A-Za-z0-9.-]+$/,
+      "gm"
+    );
+
+    if (email == "") {
+      throw new Error("Email is required");
+    }
+    if (!emailRegex.test(email)) {
+      throw new Error("Invalid email entered!");
+    }
+
+    const result = await User.find({ email });
+    if (!result.length) {
+      throw new Error("User with the provided email doesn't exists.");
+    }
+
+    result[0].password = undefined;
+
+    sendForgotEmail(result[0], req, res);
+  } catch (err) {
+    console.log("Error from send password forgot link : ", err);
+    res.status(500).json({
+      status: "failure",
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+exports.forgotPasswordController = async (req, res, next) => {
+  try {
+    const { id, uniqueString } = req.params;
+    let result = await forgotPassword.find({ userId: id });
+    if (!result.length) {
+      res.redirect(`/api/v1/email/verified/failure`);
+      // throw new Error(
+      //   "Account record doesn't exist or has been verified already. Please Sign up or login."
+      // );
+    } else {
+      const { expireAt } = result[0];
+      const hashedUniqueString = result[0].uniqueString;
+
+      if (expireAt < Date.now()) {
+        await forgotPassword.deleteOne({ userId: id });
+        // await User.deleteOne({ _id: id });
+        res.redirect(`/api/v1/email/verified/failure`);
+        // throw new Error("Link has expired. Please Sign up again!");
+      } else {
+        if (true || (await result[0].isValidateUS(uniqueString))) {
+          // await User.updateOne({ _id: id }, { verified: true });
+          res.redirect(`/api/v1/proceed/forgotpassord`);
+          await forgotPassword.deleteOne({ userId: id });
+          // res.redirect(`/api/v1/email/verified/success`);
+        } else {
+          res.redirect(`/api/v1/email/verified/failure`);
+          // throw new Error(
+          //   "Invalid Verification details passed. Check your inbox."
+          // );
+        }
+      }
+    }
+
+    // res.redirect(`/api/v1/email/verified/success`);
+  } catch (err) {
+    console.log("Error form Verify Email", err);
+    res.status().json({
+      status: "failure",
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
 exports.success = (req, res, next) => {
   res.sendFile(path.join(__dirname, "./../View/success.html"));
 };
 exports.failure = (req, res, next) => {
   res.sendFile(path.join(__dirname, "./../View/failure.html"));
+};
+
+exports.proceedFP = (req, res, next) => {
+  res.sendFile(path.join(__dirname, "./../View/forgotpasswordpage.html"));
 };
